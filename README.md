@@ -7,16 +7,15 @@ The downside is, that only integer keys are supported.
 
 ## Installation
 
-To use Go-Rel in your project, download this repository and include the following in your `go.mod` file:
+To use Go-Rel in your project, import it
 
-    require "delta/rel" v0.0.0
-    replace "delta/rel" v0.0.0 => "<location of the `rel` subdirectory of this repository on your disk>"
+    import "github.com/DeltaBoyBZ/go-rel/rel"
     
+and run
+
+    $ go mod tidy
+
 ## Basic Usage
-
-To  use Go-Rel, we must of course import it:
-
-    import "delta/rel"
     
 Go-Rel centres around the creation of a key value. 
 Keys are used to identify unique values of an array. 
@@ -26,7 +25,7 @@ Some key values remain unused in some arrays, and this is managed by Go-Rel.
 
     var ID rel.Key
     var a rel.Field[int]
-    var b rel.Field[string]
+    var b rel.Field[float32]
     ID.AddField(&a)
     ID.AddField(&b)
     
