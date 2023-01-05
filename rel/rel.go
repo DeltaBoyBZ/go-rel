@@ -7,7 +7,7 @@ type Field interface {
     Push()
     Reserve(k int)
     Activate(k int)
-    Delete(k int) 
+    Del(k int) 
 }
 
 //Elements of arrays are indexed by keys. Keys can be generated and deleted, amounting to setting them to used or unsed. 
@@ -31,7 +31,7 @@ func (key *Key) AddField (field Field) {
 }
 
 //If there are some free keys (from deletion) then reactivate an old key. Otherwise add a new higher value key. 
-func (key *Key) Generate () int {
+func (key *Key) Gen () int {
     key.genMutex.Lock()
     if len(key.free) == 0 {
         key.used = append(key.used, true)
