@@ -57,7 +57,7 @@ func (key *Key) Del (index int) {
     }
     for _, field := range key.fields {
         field.Push()
-        field.Delete(index)
+        field.Del(index)
     }
     key.free = append(key.free, index)
 }
