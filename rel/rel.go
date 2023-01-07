@@ -12,7 +12,7 @@ type Field interface {
 }
 
 type GenericDesperate interface {
-    Deport() 
+    Realloc()
     GetIndex() int
     GetSize() int
 }
@@ -81,7 +81,7 @@ type Array [T any] struct {
 func (a *Array[T]) Assign(k int, val T) {
     for _, desp := range a.desp {
         if k >= desp.GetIndex() && k < desp.GetIndex() + desp.GetSize() {
-            desp.Deport()
+            desp.Realloc()
         }
     }
     a.used[k] = true
@@ -128,6 +128,10 @@ func (a *Array[T]) GetUsed () []int {
 }
 
 func (desp *Desparate[AllocType, ElemType]) Alloc (a *Array[ElemType]) bool {
+    return desp.AllocWithOffset(a, -1)
+}
+
+func (desp *Desparate[AllocType, ElemType]) AllocWithOffset (a *Array[ElemType], offset int) bool {
     var dummyAllocType AllocType
     var dummyElemType ElemType 
     allocSize := unsafe.Sizeof(dummyAllocType)
@@ -135,7 +139,9 @@ func (desp *Desparate[AllocType, ElemType]) Alloc (a *Array[ElemType]) bool {
     elemSize := unsafe.Sizeof(dummyElemType)
     available := 0
     availableStart := len(a.Vals)
-    for i := len(a.Vals) - 1 ; i >= 0 ; i += -1 {
+    x := len(a.Vals) - 1
+    if offset >= 0 { x = offset - 1 } 
+    for i := x ; i >= 0 ; i += -1 {
         if a.used[i] { 
             available = 0
         } else {
@@ -167,11 +173,15 @@ func (desp *Desparate[AllocType, ElemType]) Get () *AllocType {
     return desp.Fallback
 }
 
-func (desp *Desparate[AllocType, ElemType]) Deport() {
-    loc := new(AllocType)
-    *loc = *(desp.Get())
-    desp.Fallback = loc
-    desp.Arr = nil
+func (desp *Desparate[AllocType, ElemType]) Realloc() {
+    var dummy AllocType
+    dummy = *desp.Get()
+    //first try to reallocate within array
+    if !desp.AllocWithOffset(desp.Arr, desp.StartIndex) {
+        desp.Fallback = new(AllocType)
+        desp.Arr = nil
+    }
+    *desp.Get() = dummy
 }
 
 func (desp *Desparate[AllocType, ElemType]) GetIndex () int {
