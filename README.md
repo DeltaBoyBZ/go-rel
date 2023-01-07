@@ -60,3 +60,19 @@ we used the `GetUsed` method:
         sum += a.Vals[elem] 
     }
     
+### Desperate Allocation
+
+The main disadvantage to implementating data structures at they are in Go-Rel, 
+is that we end up with large pieces of virtually useless memory. 
+Go-Rel allows us to make use of this memory,
+by providing a means of *desperate allocation*. 
+We can allocate data to occupy the unused parts of an array. 
+
+    var foo Desperate[int, float32] // a desperate variable of type float32, to occupy an int array  
+    foo.Alloc(&a)                   // allocates foo to occupy array a
+    *foo.Get() = 3.14               // sets the desperately allocate variable to 3.14
+
+Here the `Get` method gives the pointer to the data we're actually interested in. 
+If there was not enough space in the array for our variable, 
+then the variable is instead allocated outside the array, on the heap. 
+

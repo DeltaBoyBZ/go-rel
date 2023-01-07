@@ -127,11 +127,11 @@ func (a *Array[T]) GetUsed () []int {
     return used
 }
 
-func (desp *Desparate[AllocType, ElemType]) Alloc (a *Array[ElemType]) bool {
-    return desp.AllocWithOffset(a, -1)
+func (desp *Desparate[AllocType, ElemType]) Alloc (a *Array[ElemType]) {
+    desp.AllocWithOffset(a, -1)
 }
 
-func (desp *Desparate[AllocType, ElemType]) AllocWithOffset (a *Array[ElemType], offset int) bool {
+func (desp *Desparate[AllocType, ElemType]) AllocWithOffset (a *Array[ElemType], offset int) {
     var dummyAllocType AllocType
     var dummyElemType ElemType 
     allocSize := unsafe.Sizeof(dummyAllocType)
@@ -152,10 +152,11 @@ func (desp *Desparate[AllocType, ElemType]) AllocWithOffset (a *Array[ElemType],
             desp.Arr = a
             desp.StartIndex = availableStart 
             a.desp = append(a.desp, desp)
-            return true
+            return 
         }
     }
-    return false
+    desp.Arr = nil
+    desp.Fallback = new(AllocType) 
 }
 
 type Desparate [AllocType any, ArrayElemType any] struct {
@@ -176,11 +177,7 @@ func (desp *Desparate[AllocType, ElemType]) Get () *AllocType {
 func (desp *Desparate[AllocType, ElemType]) Realloc() {
     var dummy AllocType
     dummy = *desp.Get()
-    //first try to reallocate within array
-    if !desp.AllocWithOffset(desp.Arr, desp.StartIndex) {
-        desp.Fallback = new(AllocType)
-        desp.Arr = nil
-    }
+    desp.AllocWithOffset(desp.Arr, desp.StartIndex)
     *desp.Get() = dummy
 }
 
