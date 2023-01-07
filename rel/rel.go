@@ -1,6 +1,7 @@
 package rel
 
 import "sync"
+import "unsafe"
 
 //The interace used by Key objects. To access all arrays using that Key. 
 type Field interface {
@@ -8,6 +9,12 @@ type Field interface {
     Reserve(k int)
     Activate(k int)
     Del(k int) 
+}
+
+type GenericDesperate interface {
+    Deport() 
+    GetIndex() int
+    GetSize() int
 }
 
 //Elements of arrays are indexed by keys. Keys can be generated and deleted, amounting to setting them to used or unsed. 
@@ -67,10 +74,16 @@ type Array [T any] struct {
     Vals []T
     used []bool
     key  *Key
+    desp []GenericDesperate
 }
 
 //Assigns a value to be associated with a particular key in this array. 
 func (a *Array[T]) Assign(k int, val T) {
+    for _, desp := range a.desp {
+        if k >= desp.GetIndex() && k < desp.GetIndex() + desp.GetSize() {
+            desp.Deport()
+        }
+    }
     a.used[k] = true
     a.Vals[k] = val 
 }
@@ -113,4 +126,62 @@ func (a *Array[T]) GetUsed () []int {
     }
     return used
 }
+
+func (desp *Desparate[AllocType, ElemType]) Alloc (a *Array[ElemType]) bool {
+    var dummyAllocType AllocType
+    var dummyElemType ElemType 
+    allocSize := unsafe.Sizeof(dummyAllocType)
+    desp.Size = int(allocSize) 
+    elemSize := unsafe.Sizeof(dummyElemType)
+    available := 0
+    availableStart := len(a.Vals)
+    for i := len(a.Vals) - 1 ; i >= 0 ; i += -1 {
+        if a.used[i] { 
+            available = 0
+        } else {
+            available += int(elemSize)
+            availableStart = i 
+        }
+        if available >= int(allocSize) {
+            desp.Arr = a
+            desp.StartIndex = availableStart 
+            a.desp = append(a.desp, desp)
+            return true
+        }
+    }
+    return false
+}
+
+type Desparate [AllocType any, ArrayElemType any] struct {
+    Arr *Array[ArrayElemType]
+    StartIndex int
+    Fallback *AllocType
+    Size int
+}
+
+func (desp *Desparate[AllocType, ElemType]) Get () *AllocType {
+    if desp.Arr != nil {
+        arb_pointer := unsafe.Pointer(&desp.Arr.Vals[desp.StartIndex])
+        return (*AllocType)(arb_pointer)
+    }
+    return desp.Fallback
+}
+
+func (desp *Desparate[AllocType, ElemType]) Deport() {
+    loc := new(AllocType)
+    *loc = *(desp.Get())
+    desp.Fallback = loc
+    desp.Arr = nil
+}
+
+func (desp *Desparate[AllocType, ElemType]) GetIndex () int {
+    return desp.StartIndex
+}
+
+func (desp *Desparate[AllocType, ElemType]) GetSize () int {
+    return desp.Size
+}
+
+
+
 
